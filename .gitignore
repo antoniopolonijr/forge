@@ -12,6 +12,9 @@
 
 # testing
 /coverage
+/playwright/.auth
+/playwright-report
+/test-results
 
 # next.js
 /.next/
@@ -31,7 +34,15 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # env files (can opt-in for committing if needed)
-.env*
+.env
+.env.example
+.env.local
+.env.test
+.env.test.example
+.env.dev
+.env.development
+.env.prod
+.env.production
 
 # vercel
 .vercel
@@ -39,3 +50,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+.llm-notes/.env.test.local
+.env.test.local
+.test-branch-info.json
+.test-server-pid.json
+test/playwright/.auth*

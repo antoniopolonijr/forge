@@ -31,10 +31,24 @@ export default async function sendCelebrationEmail(
     return;
   }
 
-  const emailRes = await resend.emails.send({
-    from: "Forge <noreply@mail.holt.courses>", // replace with your domain when ready
+  /* const emailRes = await resend.emails.send({
+    from: "Forge <noreply@yourdomain.com>", // replace with your domain when ready
     to: email,
     subject: `✨ Your article got ${pageviews} views! ✨`,
+    react: (
+      <CelebrationTemplate
+        articleTitle={title}
+        articleUrl={`${BASE_URL}/wiki/${articleId}`}
+        name={name ?? "Friend"}
+        pageviews={pageviews}
+      />
+    ),
+  }); */
+
+  const emailRes = await resend.emails.send({
+    from: "Forge <onboarding@resend.dev>", // I believe it only lets you send from Resend if you haven't set up your domain
+    to: "antoniopolonijr@gmail.com", // unless you set up your own domain, you can only email yourself
+    subject: `✨ You article got ${pageviews} views! ✨`,
     react: (
       <CelebrationTemplate
         articleTitle={title}

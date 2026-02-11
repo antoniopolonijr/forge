@@ -15,17 +15,6 @@ export default async function EditArticlePage({
   const { id } = await params;
   const _user = await stackServerApp.getUser({ or: "redirect" });
 
-  // we'll uncomment this later when the articles have real IDs
-  // if (user.id !== id) {
-  //   stackServerApp.redirectToHome();
-  // }
-
-  // In a real app, you would fetch the article data here
-  // For now, we'll just show some mock data if it's not "new"
-  if (id === "new") {
-    return <WikiEditor isEditing={true} articleId={id} />;
-  }
-
   const article = await getArticleById(+id);
   if (!article) {
     notFound();

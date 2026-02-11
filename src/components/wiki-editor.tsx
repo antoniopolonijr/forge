@@ -120,13 +120,19 @@ export default function WikiEditor({
 
   // Handle cancel
   const handleCancel = () => {
-    // In a real app, you would navigate back
     const shouldLeave = window.confirm(
       "Are you sure you want to cancel? Any unsaved changes will be lost.",
     );
     if (shouldLeave) {
       console.log("User cancelled editing");
-      // navigation logic would go here
+
+      if (isEditing && articleId) {
+        // If editing an existing article, go back to the article page
+        router.back();
+      } else {
+        // If creating a new article, go back to the wiki home page
+        router.push("/");
+      }
     }
   };
 

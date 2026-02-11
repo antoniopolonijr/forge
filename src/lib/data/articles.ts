@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import redis from "@/cache";
 import db from "@/db/index";
 import { articles, usersSync } from "@/db/schema";
@@ -32,7 +32,8 @@ export async function getArticles(): Promise<ArticleList[]> {
       author: usersSync.name,
     })
     .from(articles)
-    .leftJoin(usersSync, eq(articles.authorId, usersSync.id));
+    .leftJoin(usersSync, eq(articles.authorId, usersSync.id))
+    .orderBy(desc(articles.createdAt));
 
   console.log("🏹 Get Articles Cache Miss!");
   // Store cache as JSON so we can retrieve a typed array later

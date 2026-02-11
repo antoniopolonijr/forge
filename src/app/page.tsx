@@ -20,7 +20,7 @@ export default async function Home() {
   const articles = await getArticles();
   return (
     <div>
-      <main className="max-w-2xl mx-auto mt-10 flex flex-col gap-6">
+      <main className="max-w-2xl mx-auto my-10 flex flex-col gap-6">
         {articles.map(({ title, id, createdAt, author, summary, content }) => (
           <WikiCard
             title={title}

@@ -75,14 +75,46 @@ export default function WikiArticleViewer({
       </nav>
 
       {/* Article Header */}
-      <div className="flex justify-between items-start mb-6">
+      <div className="flex justify-between items-start mb-4">
         <div className="flex-1">
-          <h1 className="text-4xl font-bold text-foreground mb-4">
-            {article.title}
-          </h1>
+          <div className="flex flex-col justify-end sm:flex-row sm:justify-between sm:items-start gap-2 mb-4">
+            <h1 className="text-4xl font-bold text-foreground mb-4">
+              {article.title}
+            </h1>
+            {/* Edit Button - Only shown if user has edit permissions */}
+            {canEdit && (
+              <div className="flex items-center gap-2">
+                <Link
+                  href={`/wiki/edit/${article.id}`}
+                  className="cursor-pointer"
+                >
+                  <Button className="cursor-pointer">
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit Article
+                  </Button>
+                </Link>
+
+                {/* Delete form calls the server action wrapper */}
+                <form action={deleteArticleForm}>
+                  <input type="hidden" name="id" value={String(article.id)} />
+                  <Button
+                    type="submit"
+                    variant="destructive"
+                    className="cursor-pointer"
+                  >
+                    <Trash className="h-4 w-4 mr-2" />
+                    Delete
+                  </Button>
+                </form>
+              </div>
+            )}
+          </div>
 
           {/* Article Metadata */}
-          <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+          <div
+            className="flex flex-wrap items-center gap-4
+           text-sm text-muted-foreground"
+          >
             <div className="flex items-center">
               <User className="h-4 w-4 mr-1" />
               <span>By {article.author ?? "Unknown"}</span>
@@ -101,31 +133,6 @@ export default function WikiArticleViewer({
             </div>
           </div>
         </div>
-
-        {/* Edit Button - Only shown if user has edit permissions */}
-        {canEdit && (
-          <div className="ml-4 flex items-center gap-2">
-            <Link href={`/wiki/edit/${article.id}`} className="cursor-pointer">
-              <Button variant="outline" className="cursor-pointer">
-                <Edit className="h-4 w-4 mr-2" />
-                Edit Article
-              </Button>
-            </Link>
-
-            {/* Delete form calls the server action wrapper */}
-            <form action={deleteArticleForm}>
-              <input type="hidden" name="id" value={String(article.id)} />
-              <Button
-                type="submit"
-                variant="destructive"
-                className="ml-2 cursor-pointer"
-              >
-                <Trash className="h-4 w-4 mr-2" />
-                Delete
-              </Button>
-            </form>
-          </div>
-        )}
       </div>
 
       {/* Article Content */}
@@ -242,20 +249,22 @@ export default function WikiArticleViewer({
       </Card>
 
       {/* Footer Actions */}
-      <div className="mt-8 flex justify-between items-center">
+      <div className="mt-6 flex flex-wrap-reverse justify-between items-center gap-4">
         <Link href="/">
           <Button variant="outline">← Back to Articles</Button>
         </Link>
 
+        {/* Edit Button - Only shown if user has edit permissions */}
         {canEdit && (
           <div className="flex items-center gap-2">
             <Link href={`/wiki/edit/${article.id}`} className="cursor-pointer">
               <Button className="cursor-pointer">
                 <Edit className="h-4 w-4 mr-2" />
-                Edit This Article
+                Edit Article
               </Button>
             </Link>
 
+            {/* Delete form calls the server action wrapper */}
             <form action={deleteArticleForm}>
               <input type="hidden" name="id" value={String(article.id)} />
               <Button

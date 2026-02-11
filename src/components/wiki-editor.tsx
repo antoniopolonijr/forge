@@ -4,7 +4,7 @@ import MDEditor from "@uiw/react-md-editor";
 import { Upload, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type React from "react";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { createArticle, updateArticle } from "@/app/actions/articles";
 import { uploadFile } from "@/app/actions/upload";
 import { Button } from "@/components/ui/button";
@@ -38,6 +38,7 @@ export default function WikiEditor({
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Validate form
   const validateForm = (): boolean => {
@@ -61,6 +62,11 @@ export default function WikiEditor({
     if (selectedFiles) {
       const newFiles = Array.from(selectedFiles);
       setFiles((prev) => [...prev, ...newFiles]);
+    }
+
+    // Clears the input value
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
   };
 
@@ -235,6 +241,7 @@ export default function WikiEditor({
                   </p>
                 </div>
                 <Input
+                  ref={fileInputRef}
                   id="file-upload"
                   type="file"
                   multiple
@@ -267,7 +274,7 @@ export default function WikiEditor({
                           variant="ghost"
                           size="sm"
                           onClick={() => removeFile(index)}
-                          className="h-8 w-8 p-0"
+                          className="h-8 w-8 p-0 cursor-pointer"
                         >
                           <X className="h-4 w-4" />
                         </Button>

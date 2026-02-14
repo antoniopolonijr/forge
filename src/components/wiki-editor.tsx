@@ -136,7 +136,7 @@ export default function WikiEditor({
         // If editing an existing article, go back to the article page
         router.back();
       } else {
-        // If creating a new article, go back to the wiki home page
+        // If creating a new article, go back to the home page
         router.push("/");
       }
     }
@@ -145,7 +145,7 @@ export default function WikiEditor({
   const pageTitle = isEditing ? "Edit Article" : "Create New Article";
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <div className="container mx-auto px-4 max-w-4xl">
       <div className="mb-8">
         <h1 className="text-3xl font-bold">{pageTitle}</h1>
         {isEditing && articleId && (

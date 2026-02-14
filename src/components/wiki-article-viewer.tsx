@@ -60,7 +60,7 @@ export default function WikiArticleViewer({
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <div className="container mx-auto px-4 max-w-4xl">
       {/* Breadcrumb Navigation */}
       <nav className="flex items-center space-x-2 text-sm text-muted-foreground mb-6">
         <Link
@@ -84,15 +84,12 @@ export default function WikiArticleViewer({
             {/* Edit Button - Only shown if user has edit permissions */}
             {canEdit && (
               <div className="flex items-center gap-2">
-                <Link
-                  href={`/wiki/edit/${article.id}`}
-                  className="cursor-pointer"
-                >
-                  <Button className="cursor-pointer">
-                    <Edit className="h-4 w-4 mr-2" />
+                <Button asChild>
+                  <Link href={`/wiki/edit/${article.id}`}>
+                    <Edit className="h-4 w-4" />
                     Edit Article
-                  </Button>
-                </Link>
+                  </Link>
+                </Button>
 
                 {/* Delete form calls the server action wrapper */}
                 <form action={deleteArticleForm}>
@@ -102,7 +99,7 @@ export default function WikiArticleViewer({
                     variant="destructive"
                     className="cursor-pointer"
                   >
-                    <Trash className="h-4 w-4 mr-2" />
+                    <Trash className="h-4 w-4" />
                     Delete
                   </Button>
                 </form>
@@ -250,19 +247,19 @@ export default function WikiArticleViewer({
 
       {/* Footer Actions */}
       <div className="mt-6 flex flex-wrap-reverse justify-between items-center gap-4">
-        <Link href="/">
-          <Button variant="outline">← Back to Articles</Button>
-        </Link>
+        <Button asChild variant="outline">
+          <Link href="/">← Back to Home</Link>
+        </Button>
 
         {/* Edit Button - Only shown if user has edit permissions */}
         {canEdit && (
           <div className="flex items-center gap-2">
-            <Link href={`/wiki/edit/${article.id}`} className="cursor-pointer">
-              <Button className="cursor-pointer">
-                <Edit className="h-4 w-4 mr-2" />
+            <Button asChild>
+              <Link href={`/wiki/edit/${article.id}`}>
+                <Edit className="h-4 w-4" />
                 Edit Article
-              </Button>
-            </Link>
+              </Link>
+            </Button>
 
             {/* Delete form calls the server action wrapper */}
             <form action={deleteArticleForm}>
@@ -272,7 +269,7 @@ export default function WikiArticleViewer({
                 variant="destructive"
                 className="cursor-pointer"
               >
-                <Trash className="h-4 w-4 mr-2" />
+                <Trash className="h-4 w-4" />
                 Delete
               </Button>
             </form>

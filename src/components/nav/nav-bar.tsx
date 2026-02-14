@@ -12,12 +12,12 @@ export default async function NavBar() {
   const user = await stackServerApp.getUser();
 
   return (
-    <nav className="w-full border-b bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 sticky top-0 z-50">
+    <nav className="w-full border-b bg-white/80 backdrop-blur supports-[backdrop-filter]:bg-white/60 sticky top-0 z-50 mb-8">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-2">
           <Link
             href="/"
-            className="font-bold text-2xl tracking-tight text-gray-900"
+            className="font-bold text-3xl tracking-tight text-gray-900"
           >
             Forge
           </Link>

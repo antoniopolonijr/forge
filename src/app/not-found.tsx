@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
+    <div className="flex items-center justify-center px-4">
       <Card className="w-full max-w-md text-center">
         <CardContent className="pt-8 pb-8">
           {/* Icon illustration */}
@@ -29,12 +29,12 @@ export default function NotFound() {
           </p>
 
           {/* Call-to-action button */}
-          <Link href="/">
-            <Button className="w-full" size="lg">
-              <Home className="h-4 w-4 mr-2" />
+          <Button asChild className="w-full" size="lg">
+            <Link href="/">
+              <Home className="h-4 w-4" />
               Back to Forge Home
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         </CardContent>
       </Card>
     </div>

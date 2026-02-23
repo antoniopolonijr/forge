@@ -1,4 +1,18 @@
-import { boolean, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+import {
+  boolean,
+  customType,
+  pgTable,
+  serial,
+  text,
+  timestamp,
+} from "drizzle-orm/pg-core";
+
+const tsvector = customType<{ data: string }>({
+  dataType() {
+    return "tsvector";
+  },
+});
 
 export const articles = pgTable("articles", {
   id: serial("id").primaryKey(),
@@ -7,6 +21,13 @@ export const articles = pgTable("articles", {
   content: text("content").notNull(),
   summary: text("summary"),
   imageUrl: text("image_url"),
+  searchVector: tsvector("search_vector").generatedAlwaysAs(
+    () =>
+      sql`to_tsvector(
+        'english',
+        coalesce(title,'') || ' ' || coalesce(content,'')
+      )`,
+  ),
   published: boolean("published").default(false).notNull(),
   authorId: text("author_id")
     .notNull()

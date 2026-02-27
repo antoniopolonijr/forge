@@ -1,3 +1,5 @@
+import { User } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import {
   Card,
@@ -14,6 +16,7 @@ interface WikiCardProps {
   date: string;
   summary: string;
   href: string;
+  imageUrl?: string | null;
 }
 
 export function WikiCard({
@@ -22,11 +25,13 @@ export function WikiCard({
   date,
   summary,
   href,
+  imageUrl,
 }: WikiCardProps) {
   return (
     <Card>
       <CardHeader className="pb-2">
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <User className="h-3 w-3" />
           <span>{author}</span>
           <span>•</span>
           <span>{date}</span>
@@ -34,6 +39,18 @@ export function WikiCard({
         <CardTitle className="text-2xl">{title}</CardTitle>
       </CardHeader>
       <CardContent className="py-0">
+        {/* Article Image - Display if exists */}
+        {imageUrl && (
+          <div className="relative h-64 rounded-lg mb-4">
+            <Image
+              src={imageUrl}
+              alt={`Image for ${title}`}
+              fill
+              className="h-full max-h-\[100vw\] max-w-full object-contain object-center rounded-lg"
+              priority
+            />
+          </div>
+        )}
         <CardDescription>{summary}</CardDescription>
       </CardContent>
       <CardFooter className="pt-2">

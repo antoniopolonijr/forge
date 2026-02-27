@@ -7,6 +7,7 @@ import {
   updateArticle,
 } from "@/app/actions/articles";
 import redis from "@/cache";
+import { invalidateArticlesCache } from "@/cache/utils";
 import * as authz from "@/db/authz";
 import db from "@/db/index";
 import { articles } from "@/db/schema";
@@ -19,6 +20,10 @@ vi.mock("@/db/authz");
 vi.mock("@/cache");
 vi.mock("@/ai/summarize");
 vi.mock("@/db/sync-user");
+
+vi.mock("@/cache/utils", () => ({
+  invalidateArticlesCache: vi.fn(),
+}));
 
 describe("Article Actions", () => {
   const mockUser = {
@@ -48,6 +53,8 @@ describe("Article Actions", () => {
     vi.mocked(stackServerApp.getUser).mockResolvedValue(mockUser);
     vi.mocked(summarizeArticle).mockResolvedValue("Test summary");
     vi.mocked(redis.del).mockResolvedValue(1);
+
+    vi.mocked(invalidateArticlesCache).mockResolvedValue(undefined);
   });
 
   describe("createArticle", () => {
@@ -73,7 +80,7 @@ describe("Article Actions", () => {
         id: 1,
       });
       expect(db.insert).toHaveBeenCalledWith(articles);
-      expect(redis.del).toHaveBeenCalledWith("articles:all");
+      expect(invalidateArticlesCache).toHaveBeenCalled();
     });
 
     it("should throw error when user is not authenticated", async () => {

@@ -82,7 +82,11 @@ export function SearchCommand() {
     <Popover open={open} onOpenChange={setOpen}>
       {/* TRIGGER */}
       <PopoverTrigger asChild>
-        <Button variant="outline" aria-label="Search Articles">
+        <Button
+          variant="outline"
+          aria-label="Search Articles"
+          className="cursor-pointer"
+        >
           {/* Display "Icon" on small screens and "Icon + Title" on larger screens */}
           <span className="inline sm:hidden pb-0.5">
             <Search className="inline h-4 w-4" />

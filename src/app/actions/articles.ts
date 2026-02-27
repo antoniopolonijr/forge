@@ -3,7 +3,7 @@
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import summarizeArticle from "@/ai/summarize";
-import redis from "@/cache";
+import { invalidateArticlesCache } from "@/cache/utils";
 import { authorizeUserToEditArticle } from "@/db/authz";
 import db from "@/db/index";
 import { articles } from "@/db/schema";
@@ -55,7 +55,7 @@ export async function createArticle(data: CreateArticleInput) {
     })
     .returning({ id: articles.id });
 
-  redis.del("articles:all");
+  await invalidateArticlesCache();
   const articleId = response[0]?.id;
   return { success: true, message: "Article create logged", id: articleId };
 }
@@ -90,6 +90,7 @@ export async function updateArticle(id: string, data: UpdateArticleInput) {
       summary: summary ?? undefined,
     })
     .where(eq(articles.id, +id));
+  await invalidateArticlesCache();
 
   return { success: true, message: `Article ${id} update logged` };
 }
@@ -107,6 +108,7 @@ export async function deleteArticle(id: string) {
   console.log("🗑️ deleteArticle called:", id);
 
   const _response = await db.delete(articles).where(eq(articles.id, +id));
+  await invalidateArticlesCache();
 
   return { success: true, message: `Article ${id} delete logged (stub)` };
 }

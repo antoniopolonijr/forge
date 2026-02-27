@@ -114,7 +114,7 @@ export default function WikiArticleViewer({
           >
             <div className="flex items-center">
               <User className="h-4 w-4 mr-1" />
-              <span>By {article.author ?? "Unknown"}</span>
+              <span> {article.author ?? "Unknown"}</span>
             </div>
             <div className="flex items-center">
               <Calendar className="h-4 w-4 mr-1" />
@@ -134,19 +134,17 @@ export default function WikiArticleViewer({
 
       {/* Article Content */}
       <Card>
-        <CardContent className="pt-6">
+        <CardContent>
           {/* Article Image - Display if exists */}
           {article.imageUrl && (
-            <div className="mb-8">
-              <div className="relative w-full h-64 md:h-80 rounded-lg overflow-hidden">
-                <Image
-                  src={article.imageUrl}
-                  alt={`Image for ${article.title}`}
-                  fill
-                  className="object-cover"
-                  priority
-                />
-              </div>
+            <div className="relative h-64 rounded-lg mb-6">
+              <Image
+                src={article.imageUrl}
+                alt={`Image for ${article.title}`}
+                fill
+                className="h-full max-h-\[100vw\] max-w-full object-contain object-center rounded-lg"
+                priority
+              />
             </div>
           )}
 

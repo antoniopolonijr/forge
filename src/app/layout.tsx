@@ -31,12 +31,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
       >
         <StackProvider app={stackClientApp}>
           <StackTheme>
             <NavBar />
-            {children}
+            <div className="flex-1">{children}</div>
             <Footer />
             <Analytics />
             <SpeedInsights />

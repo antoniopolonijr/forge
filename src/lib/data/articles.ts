@@ -1,7 +1,7 @@
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, inArray } from "drizzle-orm";
 import redis from "@/cache";
 import db from "@/db/index";
-import { articles, usersSync } from "@/db/schema";
+import { articleImages, articles, usersSync } from "@/db/schema";
 
 export const DEFAULT_PAGE_SIZE = 10;
 
@@ -14,7 +14,8 @@ export type ArticleList = {
   summary: string | null;
   content: string;
   author: string | null;
-  imageUrl?: string | null;
+  imageUrl?: string | null; // first image, for list/card
+  imageUrls?: string[] | null; // all images
 };
 
 export type ArticleWithAuthor = {
@@ -23,6 +24,7 @@ export type ArticleWithAuthor = {
   content: string;
   createdAt: string;
   imageUrl?: string | null;
+  imageUrls?: string[] | null;
   author: string | null;
 };
 
@@ -62,7 +64,7 @@ export async function getArticlesByPage(
       .where(eq(articles.published, true));
     const total = totalRows.length;
 
-    // Get paginated articles
+    // Get paginated articles (without imageUrls)
     const response = await db
       .select({
         title: articles.title,
@@ -80,10 +82,41 @@ export async function getArticlesByPage(
       .limit(validLimit)
       .offset(offset);
 
+    // fetch associated images separately and merge
+    let articlesWithImages: ArticleList[] = [];
+    if (response.length === 0) {
+      articlesWithImages = response as unknown as ArticleList[];
+    } else {
+      const ids = response.map((r) => r.id);
+      const imgRows = await db
+        .select({
+          articleId: articleImages.articleId,
+          url: articleImages.url,
+        })
+        .from(articleImages)
+        .where(inArray(articleImages.articleId, ids));
+
+      const map = new Map<number, string[]>();
+      imgRows.forEach((row) => {
+        const arr = map.get(row.articleId) || [];
+        arr.push(row.url);
+        map.set(row.articleId, arr);
+      });
+
+      articlesWithImages = response.map((r) => {
+        const urls = map.get(r.id) ?? [];
+        return {
+          ...r,
+          imageUrls: urls.length > 0 ? urls : null,
+          imageUrl: urls[0] ?? r.imageUrl ?? null,
+        };
+      });
+    }
+
     const hasMore = offset + validLimit < total;
 
     const payload = {
-      articles: response as unknown as ArticleList[],
+      articles: articlesWithImages as ArticleList[],
       total,
       hasMore,
     };
@@ -121,6 +154,23 @@ export async function getArticleById(
     .from(articles)
     .where(eq(articles.id, id))
     .leftJoin(usersSync, eq(articles.authorId, usersSync.id));
-  // Cast the DB response to the shape we selected above.
-  return response[0] ? (response[0] as unknown as ArticleWithAuthor) : null;
+
+  if (!response[0]) return null;
+  const row = response[0] as unknown as ArticleWithAuthor;
+
+  // fetch any associated images
+  const imgRows = await db
+    .select({ url: articleImages.url })
+    .from(articleImages)
+    .where(eq(articleImages.articleId, id));
+
+  const urls = imgRows.map((r) => r.url);
+  if (urls.length > 0) {
+    row.imageUrls = urls;
+    row.imageUrl = urls[0] ?? row.imageUrl ?? null;
+  } else {
+    row.imageUrls = null;
+  }
+
+  return row;
 }

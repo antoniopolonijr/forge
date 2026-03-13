@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import WikiEditor from "@/components/wiki-editor";
+import WikiEditor from "@/components/wiki/wiki-editor";
 import { getArticleById } from "@/lib/data/articles";
 import { stackServerApp } from "@/stack/server";
 
@@ -25,6 +25,7 @@ export default async function EditArticlePage({
       initialContent={article.content}
       isEditing={true}
       articleId={id}
+      initialImageUrls={article.imageUrls ?? []}
     />
   );
 }

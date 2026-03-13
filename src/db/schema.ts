@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm";
 import {
   boolean,
   customType,
+  integer,
   pgTable,
   serial,
   text,
@@ -20,7 +21,7 @@ export const articles = pgTable("articles", {
   slug: text("slug").notNull().unique(),
   content: text("content").notNull(),
   summary: text("summary"),
-  imageUrl: text("image_url"),
+  imageUrl: text("image_url"), // legacy single-image column, kept for now
   searchVector: tsvector("search_vector").generatedAlwaysAs(
     () =>
       sql`to_tsvector(
@@ -36,13 +37,26 @@ export const articles = pgTable("articles", {
   updatedAt: timestamp("updated_at", { mode: "string" }).defaultNow().notNull(),
 });
 
-const schema = { articles };
+// new table for associated images
+export const articleImages = pgTable("article_images", {
+  id: serial("id").primaryKey(),
+  articleId: serial("article_id")
+    .notNull()
+    .references(() => articles.id, {
+      onDelete: "cascade",
+    }),
+  url: text("url").notNull(),
+  position: integer("position").notNull().default(0),
+});
+
+const schema = { articles, articleImages };
 export default schema;
 
 export type Article = typeof articles.$inferSelect;
 export type NewArticle = typeof articles.$inferInsert;
 
-// add this
+export type ArticleImage = typeof articleImages.$inferSelect;
+
 export const usersSync = pgTable("usersSync", {
   id: text("id").primaryKey(), // Stack Auth user ID
   name: text("name"),

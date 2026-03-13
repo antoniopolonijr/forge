@@ -1,12 +1,11 @@
 "use server";
 
 import { eq } from "drizzle-orm";
-import { redirect } from "next/navigation";
 import summarizeArticle from "@/ai/summarize";
 import { invalidateArticlesCache } from "@/cache/utils";
 import { authorizeUserToEditArticle } from "@/db/authz";
 import db from "@/db/index";
-import { articles } from "@/db/schema";
+import { articleImages, articles } from "@/db/schema";
 import { ensureUserExists } from "@/db/sync-user";
 import { stackServerApp } from "@/stack/server";
 
@@ -14,13 +13,13 @@ export type CreateArticleInput = {
   title: string;
   content: string;
   authorId: string;
-  imageUrl?: string;
+  imageUrls?: string[];
 };
 
 export type UpdateArticleInput = {
   title?: string;
   content?: string;
-  imageUrl?: string;
+  imageUrls?: string[];
 };
 
 export async function createArticle(data: CreateArticleInput) {
@@ -50,13 +49,24 @@ export async function createArticle(data: CreateArticleInput) {
       slug: `${Date.now()}`,
       published: true,
       authorId: user.id,
-      imageUrl: data.imageUrl ?? undefined,
+      imageUrl: data.imageUrls?.[0] ?? undefined,
       summary,
     })
     .returning({ id: articles.id });
 
   await invalidateArticlesCache();
   const articleId = response[0]?.id;
+
+  // if image URLs provided, insert into article_images table
+  if (articleId && data.imageUrls && data.imageUrls.length > 0) {
+    const rows = data.imageUrls.map((url, idx) => ({
+      articleId,
+      url,
+      position: idx,
+    }));
+    await db.insert(articleImages).values(rows);
+  }
+
   return { success: true, message: "Article create logged", id: articleId };
 }
 
@@ -86,10 +96,24 @@ export async function updateArticle(id: string, data: UpdateArticleInput) {
     .set({
       title: data.title,
       content: data.content,
-      imageUrl: data.imageUrl ?? undefined,
+      imageUrl: data.imageUrls?.[0] ?? null,
       summary: summary ?? undefined,
     })
     .where(eq(articles.id, +id));
+
+  // update images: wipe old ones and insert new list
+  if (data.imageUrls) {
+    await db.delete(articleImages).where(eq(articleImages.articleId, +id));
+    if (data.imageUrls.length > 0) {
+      const rows = data.imageUrls.map((url, idx) => ({
+        articleId: +id,
+        url,
+        position: idx,
+      }));
+      await db.insert(articleImages).values(rows);
+    }
+  }
+
   await invalidateArticlesCache();
 
   return { success: true, message: `Article ${id} update logged` };
@@ -97,30 +121,25 @@ export async function updateArticle(id: string, data: UpdateArticleInput) {
 
 export async function deleteArticle(id: string) {
   const user = await stackServerApp.getUser();
+
   if (!user) {
     throw new Error("❌ Unauthorized");
   }
 
-  if (!(await authorizeUserToEditArticle(user.id, +id))) {
+  const articleId = Number(id);
+
+  if (!(await authorizeUserToEditArticle(user.id, articleId))) {
     throw new Error("❌ Forbidden");
   }
 
-  console.log("🗑️ deleteArticle called:", id);
+  console.log("🗑️ deleteArticle called:", articleId);
 
-  const _response = await db.delete(articles).where(eq(articles.id, +id));
+  await db.delete(articles).where(eq(articles.id, articleId));
+
   await invalidateArticlesCache();
 
-  return { success: true, message: `Article ${id} delete logged (stub)` };
-}
-
-// Form-friendly server action: accepts FormData from a client form and calls deleteArticle
-export async function deleteArticleForm(formData: FormData): Promise<void> {
-  const id = formData.get("id");
-  if (!id) {
-    throw new Error("Missing article id");
-  }
-
-  await deleteArticle(String(id));
-  // After deleting, redirect the user back to the homepage.
-  redirect("/");
+  return {
+    success: true,
+    message: `Article ${articleId} delete logged (stub)`,
+  };
 }

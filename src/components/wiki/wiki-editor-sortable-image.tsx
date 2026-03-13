@@ -31,7 +31,7 @@ export function SortableImage({ img, removeFile }: SortableImageProps) {
     >
       <Image
         src={img.url}
-        alt="preview"
+        alt={`preview-${img.id}`}
         width={96}
         height={96}
         className="object-cover rounded-md border"

@@ -10,7 +10,7 @@ import redis from "@/cache";
 import { invalidateArticlesCache } from "@/cache/utils";
 import * as authz from "@/db/authz";
 import db from "@/db/index";
-import { articles } from "@/db/schema";
+import { articleImages, articles } from "@/db/schema";
 import { stackServerApp } from "@/stack/server";
 
 // Mock dependencies
@@ -69,7 +69,7 @@ describe("Article Actions", () => {
         title: "Test Article",
         content: "Test content",
         authorId: mockUser.id,
-        imageUrl: "https://example.com/image.jpg",
+        imageUrls: ["https://example.com/image.jpg"],
       };
 
       const result = await createArticle(articleData);
@@ -80,6 +80,7 @@ describe("Article Actions", () => {
         id: 1,
       });
       expect(db.insert).toHaveBeenCalledWith(articles);
+      expect(db.insert).toHaveBeenCalledWith(articleImages);
       expect(invalidateArticlesCache).toHaveBeenCalled();
     });
 
@@ -137,10 +138,18 @@ describe("Article Actions", () => {
         }),
       } as unknown as ReturnType<typeof db.update>);
 
+      // stub delete for articleImages
+      const mockDel = vi.fn().mockReturnValue({
+        where: vi.fn().mockResolvedValue({}),
+      });
+      vi.mocked(db.delete).mockReturnValue({
+        where: mockDel,
+      } as unknown as ReturnType<typeof db.delete>);
+
       const updateData = {
         title: "Updated Title",
         content: "Updated content",
-        imageUrl: "https://example.com/new-image.jpg",
+        imageUrls: ["https://example.com/new-image.jpg"],
       };
 
       const result = await updateArticle("1", updateData);
@@ -154,6 +163,8 @@ describe("Article Actions", () => {
         1,
       );
       expect(db.update).toHaveBeenCalledWith(articles);
+      expect(db.delete).toHaveBeenCalledWith(articleImages);
+      expect(db.insert).toHaveBeenCalledWith(articleImages);
     });
 
     it("should throw error when user is not authenticated", async () => {

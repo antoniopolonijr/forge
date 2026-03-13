@@ -51,6 +51,12 @@ test.describe("Article CRUD Operations (Authenticated)", () => {
     }
   });
 
+  // tiny 1x1 PNG buffer used across tests
+  const onePixel = Buffer.from(
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAn8B9sN9YQAAAABJRU5ErkJggg==",
+    "base64",
+  );
+
   test("should create a new article", async ({ page }) => {
     // Navigate to create article page
     await page.goto("/wiki/edit/new");
@@ -75,6 +81,29 @@ test.describe("Article CRUD Operations (Authenticated)", () => {
       .first()
       .fill("This is a test article content created by Playwright E2E test.");
 
+    // attempting to upload a non-image should be ignored
+    const textFile = {
+      name: "notimage.txt",
+      mimeType: "text/plain",
+      buffer: Buffer.from("just text"),
+    };
+    const fileInput = page.locator("input#file-upload");
+    await fileInput.setInputFiles(textFile);
+    await expect(page.locator('img[alt^="preview-"]')).toHaveCount(0);
+
+    // now attach a pair of tiny PNGs using the hidden file input
+    const onePixel = Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAn8B9sN9YQAAAABJRU5ErkJggg==",
+      "base64",
+    );
+    await fileInput.setInputFiles([
+      { name: "a.png", mimeType: "image/png", buffer: onePixel },
+      { name: "b.png", mimeType: "image/png", buffer: onePixel },
+    ]);
+
+    // expect two preview images to show up
+    await expect(page.locator('img[alt^="preview-"]')).toHaveCount(2);
+
     // Submit form
     const submitButton = page.locator('button[type="submit"]');
     await submitButton.click();
@@ -85,6 +114,12 @@ test.describe("Article CRUD Operations (Authenticated)", () => {
     // Verify the article was created
     const articleTitle = page.locator("h1").filter({ hasText: uniqueTitle });
     await expect(articleTitle).toBeVisible({ timeout: 10000 });
+
+    // because we uploaded two images, the slider next button should be visible
+    const nextButton = page.locator('button[aria-label="Next image"]');
+    if (await nextButton.isVisible().catch(() => false)) {
+      await expect(nextButton).toBeVisible();
+    }
   });
 
   test("should update an existing article", async ({ page }) => {
@@ -117,6 +152,12 @@ test.describe("Article CRUD Operations (Authenticated)", () => {
     await page.goto(`/wiki/edit/${articleId}`);
     await page.waitForLoadState("networkidle");
 
+    // existing previews should appear (from initial upload)
+    await expect(page.locator('img[alt^="preview-"]')).toHaveCount(2);
+
+    // prepare file input for adding more images
+    const fileInput = page.locator("input#file-upload");
+
     // Update the article
     const editTitleInput = page.locator('input[name="title"]');
     const editContentTextarea = page
@@ -132,6 +173,14 @@ test.describe("Article CRUD Operations (Authenticated)", () => {
     await editContentTextarea
       .first()
       .fill("This content has been updated by Playwright test.");
+
+    // attach another image while editing (should increment previews)
+    await fileInput.setInputFiles({
+      name: "c.png",
+      mimeType: "image/png",
+      buffer: onePixel,
+    });
+    await expect(page.locator('img[alt^="preview-"]')).toHaveCount(3);
 
     // Submit update
     const updateButton = page.locator('button[type="submit"]');

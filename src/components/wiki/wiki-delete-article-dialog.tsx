@@ -2,7 +2,6 @@
 
 import { Trash2Icon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useTransition } from "react";
 import { deleteArticle } from "@/app/actions/articles";
 import {
   AlertDialog,
@@ -23,14 +22,11 @@ type Props = {
 };
 
 export function DeleteArticleDialog({ articleId }: Props) {
-  const [isPending, startTransition] = useTransition();
-
   const router = useRouter();
-  function handleDelete() {
-    startTransition(async () => {
-      await deleteArticle(articleId);
-      router.push("/");
-    });
+
+  async function handleDelete() {
+    await deleteArticle(articleId);
+    router.replace("/");
   }
 
   return (
@@ -47,7 +43,9 @@ export function DeleteArticleDialog({ articleId }: Props) {
           <AlertDialogMedia className="bg-destructive/10 text-destructive dark:bg-destructive/20 dark:text-destructive">
             <Trash2Icon />
           </AlertDialogMedia>
+
           <AlertDialogTitle>Delete article?</AlertDialogTitle>
+
           <AlertDialogDescription>
             This will permanently delete this article. Are you sure you want to
             proceed?
@@ -55,16 +53,13 @@ export function DeleteArticleDialog({ articleId }: Props) {
         </AlertDialogHeader>
 
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isPending}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
 
-          <AlertDialogAction asChild>
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={isPending}
-            >
-              {isPending ? "Deleting..." : "Confirm Delete"}
-            </Button>
+          <AlertDialogAction
+            onClick={handleDelete}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            Confirm Delete
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

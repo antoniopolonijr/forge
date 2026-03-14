@@ -132,8 +132,21 @@ test.describe("Article CRUD Operations (Authenticated)", () => {
       .or(page.locator(".w-md-editor-text-input"));
 
     const originalTitle = `Article to Update ${Date.now()}`;
+
     await titleInput.fill(originalTitle);
     await contentTextarea.first().fill("Original content that will be changed");
+
+    // 🟢 ADD THIS BLOCK
+    const fileInput = page.locator("input#file-upload");
+
+    await fileInput.setInputFiles([
+      { name: "a.png", mimeType: "image/png", buffer: onePixel },
+      { name: "b.png", mimeType: "image/png", buffer: onePixel },
+    ]);
+
+    // verify previews before submit
+    await expect(page.locator('img[alt^="preview-"]')).toHaveCount(2);
+    // 🟢 END BLOCK
 
     const createButton = page.locator('button[type="submit"]');
     await createButton.click();
@@ -156,7 +169,13 @@ test.describe("Article CRUD Operations (Authenticated)", () => {
     await expect(page.locator('img[alt^="preview-"]')).toHaveCount(2);
 
     // prepare file input for adding more images
-    const fileInput = page.locator("input#file-upload");
+    await fileInput.setInputFiles({
+      name: "c.png",
+      mimeType: "image/png",
+      buffer: onePixel,
+    });
+
+    await expect(page.locator('img[alt^="preview-"]')).toHaveCount(3);
 
     // Update the article
     const editTitleInput = page.locator('input[name="title"]');
@@ -164,7 +183,6 @@ test.describe("Article CRUD Operations (Authenticated)", () => {
       .locator('textarea[name="content"]')
       .or(page.locator(".w-md-editor-text-input"));
 
-    // Clear and fill with new values
     await editTitleInput.clear();
     const updatedTitle = `Updated Article ${Date.now()}`;
     await editTitleInput.fill(updatedTitle);
@@ -174,25 +192,15 @@ test.describe("Article CRUD Operations (Authenticated)", () => {
       .first()
       .fill("This content has been updated by Playwright test.");
 
-    // attach another image while editing (should increment previews)
-    await fileInput.setInputFiles({
-      name: "c.png",
-      mimeType: "image/png",
-      buffer: onePixel,
-    });
-    await expect(page.locator('img[alt^="preview-"]')).toHaveCount(3);
-
-    // Submit update
     const updateButton = page.locator('button[type="submit"]');
     await updateButton.click();
 
-    // Wait for redirect (AI summary generation may take time)
     await page.waitForURL(/\/wiki\/\d+/, { timeout: 20000 });
 
-    // Verify update was successful
     const updatedTitleElement = page
       .locator("h1")
       .filter({ hasText: updatedTitle });
+
     await expect(updatedTitleElement).toBeVisible({ timeout: 10000 });
   });
 
@@ -206,42 +214,40 @@ test.describe("Article CRUD Operations (Authenticated)", () => {
       .or(page.locator(".w-md-editor-text-input"));
 
     const uniqueTitle = `Article to Delete ${Date.now()}`;
+
     await titleInput.fill(uniqueTitle);
     await contentTextarea.first().fill("This article will be deleted");
 
-    const createButton = page.locator('button[type="submit"]');
-    await createButton.click();
+    // submit form
+    await page.locator('button[type="submit"]').click();
 
     // Wait for redirect to article page
     await page.waitForURL(/\/wiki\/\d+/, { timeout: 20000 });
 
     // Verify we're on the article page
     await expect(
-      page.locator("h1").filter({ hasText: uniqueTitle }),
+      page.getByRole("heading", { name: uniqueTitle }),
     ).toBeVisible();
 
-    // Look for delete button (use first() to avoid strict mode violation if multiple exist)
+    // Click delete button
     const deleteButton = page
-      .locator("button")
-      .filter({ hasText: /Delete/i })
+      .getByRole("button", { name: /delete article/i })
       .first();
+    await deleteButton.click();
 
-    if (await deleteButton.isVisible()) {
-      // Handle confirmation dialog if it appears
-      page.on("dialog", (dialog) => dialog.accept());
+    // Wait for confirmation dialog
+    const dialog = page.getByRole("alertdialog", { name: /delete article/i });
+    await expect(dialog).toBeVisible();
 
-      await deleteButton.click();
+    // Confirm delete
+    await page.getByRole("button", { name: /confirm delete/i }).click();
 
-      // Should redirect to home page after deletion
-      await page.waitForURL("/", { timeout: 15000 });
+    // Wait for redirect to home
+    await page.waitForURL("/", { timeout: 15000 });
+    await expect(page).toHaveURL("/");
 
-      // Verify we're back on home page
-      await expect(page).toHaveURL("/");
-
-      // Verify article is no longer visible (wait a bit for potential cache clear)
-      await page.waitForTimeout(1000);
-      await expect(page.locator(`text=${uniqueTitle}`)).not.toBeVisible();
-    }
+    // Article should no longer be visible
+    await expect(page.getByText(uniqueTitle)).not.toBeVisible();
   });
 
   test("should prevent creating article with empty title", async ({ page }) => {

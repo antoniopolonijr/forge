@@ -87,7 +87,7 @@ The component automatically detects whether it's in "create" or "edit" mode base
 - Multiple file selection
 - Display uploaded files with sizes
 - Remove individual files capability
-- Drag-and-drop area
+- Drag-and-drop area with visual highlight when dragging and support for multiple files
 
 ### 4. Markdown Editor
 

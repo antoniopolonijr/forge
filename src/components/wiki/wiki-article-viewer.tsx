@@ -1,23 +1,24 @@
 "use client";
 
-import {
-  Calendar,
-  ChevronRight,
-  Edit,
-  Eye,
-  Home,
-  Trash,
-  User,
-} from "lucide-react";
+import { Calendar, ChevronRight, Edit, Eye, Home, User } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import * as React from "react";
 import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import { deleteArticleForm } from "@/app/actions/articles";
 import { incrementPageview } from "@/app/actions/pageviews";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Carousel,
+  type CarouselApi,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
+import { DeleteArticleDialog } from "@/components/wiki/wiki-delete-article-dialog";
 
 interface ViewerArticle {
   title: string;
@@ -26,6 +27,7 @@ interface ViewerArticle {
   content: string;
   createdAt: string;
   imageUrl?: string | null;
+  imageUrls?: string[] | null;
 }
 
 interface WikiArticleViewerProps {
@@ -38,7 +40,7 @@ export default function WikiArticleViewer({
   article,
   canEdit = false,
 }: WikiArticleViewerProps) {
-  // local state to show updated pageviews after increment
+  // PageViews state to reflect real-time updates after incrementing on mount
   const [localPageviews, setLocalPageviews] = useState<number | null>(null);
 
   useEffect(() => {
@@ -49,7 +51,7 @@ export default function WikiArticleViewer({
     fetchPageview();
   }, [article.id]);
 
-  // Format date for display
+  // Format Date for display
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", {
@@ -58,6 +60,25 @@ export default function WikiArticleViewer({
       day: "numeric",
     });
   };
+
+  // Carousel State and Handlers
+  const [api, setApi] = React.useState<CarouselApi>();
+  const [current, setCurrent] = React.useState(0);
+
+  React.useEffect(() => {
+    if (!api) {
+      return;
+    }
+
+    setCurrent(api.selectedScrollSnap() + 1);
+
+    api.on("select", () => {
+      setCurrent(api.selectedScrollSnap() + 1);
+    });
+  }, [api]);
+
+  // Guard against null or undefined imageUrls
+  const urls = article.imageUrls as string[];
 
   return (
     <div className="container mx-auto px-4 max-w-4xl">
@@ -81,7 +102,7 @@ export default function WikiArticleViewer({
             <h1 className="text-4xl font-bold text-foreground mb-4">
               {article.title}
             </h1>
-            {/* Edit Button - Only shown if user has edit permissions */}
+            {/* Edit Button and Delete Button - Only shown if user has edit permissions */}
             {canEdit && (
               <div className="flex items-center gap-2">
                 <Button asChild>
@@ -91,18 +112,7 @@ export default function WikiArticleViewer({
                   </Link>
                 </Button>
 
-                {/* Delete form calls the server action wrapper */}
-                <form action={deleteArticleForm}>
-                  <input type="hidden" name="id" value={String(article.id)} />
-                  <Button
-                    type="submit"
-                    variant="destructive"
-                    className="cursor-pointer"
-                  >
-                    <Trash className="h-4 w-4" />
-                    Delete
-                  </Button>
-                </form>
+                <DeleteArticleDialog articleId={String(article.id)} />
               </div>
             )}
           </div>
@@ -136,15 +146,52 @@ export default function WikiArticleViewer({
       <Card>
         <CardContent>
           {/* Article Image - Display if exists */}
-          {article.imageUrl && (
-            <div className="relative h-64 rounded-lg mb-6">
-              <Image
-                src={article.imageUrl}
-                alt={`Image for ${article.title}`}
-                fill
-                className="h-full max-h-\[100vw\] max-w-full object-contain object-center rounded-lg"
-                priority
-              />
+
+          {article.imageUrls && article.imageUrls.length > 0 && (
+            <div className="mx-auto max-w-[10rem] sm:max-w-xs pb-4">
+              <Carousel
+                setApi={setApi}
+                className="w-full max-w-xs"
+                opts={{
+                  loop: true,
+                }}
+              >
+                <CarouselContent>
+                  {urls.map((url) => (
+                    <CarouselItem key={url}>
+                      <div className="m-px">
+                        <div className="relative aspect-square p-2">
+                          <Image
+                            src={url}
+                            alt={`Image ${current} of ${urls.length} for article ${article.title}`}
+                            fill
+                            className="object-contain rounded-lg"
+                            priority={current === 1}
+                            loading={current === 1 ? "eager" : "lazy"}
+                          />
+                        </div>
+                      </div>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+
+                {urls.length > 1 && <CarouselPrevious />}
+                {urls.length > 1 && <CarouselNext />}
+              </Carousel>
+              {urls.length > 1 && (
+                <div className="flex justify-center gap-2 pt-3">
+                  {urls.map((url, index) => (
+                    <span
+                      key={url}
+                      className={`h-2 w-2 rounded-full ${
+                        current === index + 1
+                          ? "bg-primary"
+                          : "bg-muted-foreground/40"
+                      }`}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -249,7 +296,7 @@ export default function WikiArticleViewer({
           <Link href="/">← Back to Home</Link>
         </Button>
 
-        {/* Edit Button - Only shown if user has edit permissions */}
+        {/* Edit Button and Delete Button - Only shown if user has edit permissions */}
         {canEdit && (
           <div className="flex items-center gap-2">
             <Button asChild>
@@ -259,18 +306,7 @@ export default function WikiArticleViewer({
               </Link>
             </Button>
 
-            {/* Delete form calls the server action wrapper */}
-            <form action={deleteArticleForm}>
-              <input type="hidden" name="id" value={String(article.id)} />
-              <Button
-                type="submit"
-                variant="destructive"
-                className="cursor-pointer"
-              >
-                <Trash className="h-4 w-4" />
-                Delete
-              </Button>
-            </form>
+            <DeleteArticleDialog articleId={String(article.id)} />
           </div>
         )}
       </div>

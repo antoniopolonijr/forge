@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Pagination } from "@/components/pagination/pagination";
 import { Button } from "@/components/ui/button";
-import { WikiCard } from "@/components/ui/wiki-card";
+import { WikiCard } from "@/components/wiki/wiki-card";
 import { DEFAULT_PAGE_SIZE, getArticlesByPage } from "@/lib/data/articles";
 import { formatRelativeOrAbsolute } from "@/lib/utils/time";
 

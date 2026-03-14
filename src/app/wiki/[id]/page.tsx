@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import WikiArticleViewer from "@/components/wiki-article-viewer";
+import WikiArticleViewer from "@/components/wiki/wiki-article-viewer";
 import { authorizeUserToEditArticle } from "@/db/authz";
 import { getArticleById } from "@/lib/data/articles";
 import { stackServerApp } from "@/stack/server";
